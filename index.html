@@ -6,7 +6,6 @@
     <title>数学口算练习</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* 其他样式不变，仅修改倒计时容器样式 */
         * {
             margin: 0;
             padding: 0;
@@ -34,10 +33,10 @@
             padding-bottom: 8px;
             border-bottom: 1px solid #eee;
         }
-        /* 倒计时容器改为透明背景，文字用深灰色 */
+        /* 倒计时透明样式 */
         .countdown-container {
-            background-color: transparent; /* 透明背景 */
-            color: #333; /* 深灰色文字，不刺眼 */
+            background-color: transparent;
+            color: #333;
             padding: 8px 15px;
             border-radius: 6px;
             text-align: center;
@@ -45,9 +44,8 @@
             margin-bottom: 15px;
             display: none;
         }
-        /* 最后5分钟警告效果改为柔和的橙色闪烁 */
         .countdown-warning {
-            color: #f39c12; /* 橙色文字 */
+            color: #f39c12;
             animation: blink 1s infinite;
         }
         @keyframes blink {
@@ -55,7 +53,6 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-        /* 以下样式均保持不变 */
         .settings-panel {
             padding: 15px;
             margin-bottom: 15px;
@@ -251,13 +248,144 @@
     </style>
 </head>
 <body>
-    <!-- HTML结构和JavaScript代码与之前完全一致，此处省略 -->
     <div class="container" id="main-container">
         <div class="countdown-container" id="countdown-container">
             剩余时间：<span id="countdown-timer">30:00</span>
         </div>
         
-        <!-- 其他HTML内容不变 -->
+        <h1>数学口算练习</h1>
+
+        <div id="settings-panel" class="settings-panel">
+            <div class="setting-group">
+                <label for="student-name" class="setting-label">选择姓名</label>
+                <select id="student-name">
+                    <option value="孙明卓">孙明卓</option>
+                    <option value="孙竹">孙竹</option>
+                </select>
+                <div class="current-time-display" id="current-time-display"></div>
+            </div>
+
+            <div class="setting-group">
+                <div class="operation-item">
+                    <input type="checkbox" id="enable-timer" checked>
+                    <label for="enable-timer">启用30分钟倒计时</label>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-title">运算类型</div>
+                <div class="operation-types">
+                    <div class="operation-item">
+                        <input type="checkbox" id="op-add" checked>
+                        <label for="op-add">加法</label>
+                    </div>
+                    <div class="operation-item">
+                        <input type="checkbox" id="op-sub" checked>
+                        <label for="op-sub">减法</label>
+                    </div>
+                    <div class="operation-item">
+                        <input type="checkbox" id="op-mul" checked>
+                        <label for="op-mul">乘法</label>
+                    </div>
+                    <div class="operation-item">
+                        <input type="checkbox" id="op-div" checked>
+                        <label for="op-div">除法</label>
+                    </div>
+                </div>
+                <div class="operation-item">
+                    <input type="checkbox" id="div-exact" checked>
+                    <label for="div-exact">除法仅允许整除</label>
+                </div>
+                <div class="operation-item negative-option">
+                    <input type="checkbox" id="allow-negative">
+                    <label for="allow-negative">允许负数参与运算（包括结果为负）</label>
+                </div>
+            </div>
+
+            <!-- 加法默认范围0-500 -->
+            <div class="setting-group" id="add-setting">
+                <div class="setting-title">加法数值范围</div>
+                <div class="range-inputs">
+                    <input type="number" id="add-min" value="0" placeholder="最小">
+                    <input type="number" id="add-max" value="500" min="1" placeholder="最大">
+                </div>
+                <div style="font-size: 12px; color: #666;">两个加数的范围（允许负数时最小可设为负数）</div>
+            </div>
+
+            <!-- 减法默认范围0-500 -->
+            <div class="setting-group" id="sub-setting">
+                <div class="setting-title">减法数值范围</div>
+                <div class="range-inputs">
+                    <input type="number" id="sub-min" value="0" placeholder="最小">
+                    <input type="number" id="sub-max" value="500" min="1" placeholder="最大">
+                </div>
+                <div style="font-size: 12px; color: #666;">被减数和减数的范围（允许负数时可出现结果为负）</div>
+            </div>
+
+            <div class="setting-group" id="mul-setting">
+                <div class="setting-title">乘法参数设置</div>
+                <div class="setting-label">第一个乘数位数</div>
+                <select id="mul-digit1">
+                    <option value="0" selected>1位数两位数随机</option>
+                    <option value="1">1位数（1-9）</option>
+                    <option value="2">2位数（10-99）</option>
+                    <option value="3">3位数（100-999）</option>
+                </select>
+                
+                <div class="setting-label">第二个乘数位数</div>
+                <select id="mul-digit2">
+                    <option value="1" selected>1位数（1-9）</option>
+                    <option value="2">2位数（10-99）</option>
+                    <option value="3">3位数（100-999）</option>
+                </select>
+                
+                <div class="setting-label">最大乘积结果</div>
+                <input type="number" id="mul-max-result" value="200" min="10" placeholder="如200">
+            </div>
+
+            <div class="setting-group" id="div-setting">
+                <div class="setting-title">除法数值范围</div>
+                <div class="setting-label">被除数范围</div>
+                <div class="range-inputs">
+                    <input type="number" id="div-dividend-min" value="0" placeholder="被除数最小">
+                    <input type="number" id="div-dividend-max" value="81" min="1" placeholder="被除数最大">
+                </div>
+                <div class="setting-label">除数范围</div>
+                <div class="range-inputs">
+                    <input type="number" id="div-divisor-min" value="1" min="1" placeholder="除数最小">
+                    <input type="number" id="div-divisor-max" value="10" min="1" placeholder="除数最大">
+                </div>
+                <div style="font-size: 12px; color: #666;">允许负数时，被除数和除数可设为负数（仍保证整除）</div>
+            </div>
+
+            <button class="btn start-btn" id="start-btn">开始答题</button>
+        </div>
+
+        <div class="info-bar" style="display: none;" id="info-bar">
+            <div>姓名：<span id="display-name">-</span></div>
+            <div class="timer">用时：<span id="timer">00:00:00</span></div>
+        </div>
+
+        <div class="single-question" id="question-area">
+            <div class="question-number">第 <span id="current-question">1</span>/50 题</div>
+            <div class="question-content" id="question-content">8 + 5 ＝</div>
+            <input type="number" step="any" class="answer-input" id="current-answer" placeholder="写答案" 
+                   autocomplete="off" inputmode="numeric" pattern="[0-9-]*">
+            <div class="feedback" id="feedback"></div>
+            <button class="btn submit-btn" id="question-submit">提交</button>
+        </div>
+
+        <div class="result-area" id="result-area">
+            <div class="result-meta">
+                开始时间：<span id="start-time-display">-</span>
+            </div>
+            <div class="score-display">
+                完成！得分：<span id="score">0</span> / 100 分
+            </div>
+            <div class="wrong-title">错题（共 <span id="wrong-count">0</span> 道）</div>
+            <div class="wrong-list" id="wrong-list"></div>
+            <button class="btn save-btn" id="save-btn">保存结果+截图</button>
+        </div>
     </div>
 
     <div class="screenshot-toast" id="screenshot-toast">
@@ -265,7 +393,392 @@
     </div>
 
     <script>
-        // JavaScript代码与之前完全一致，此处省略
+        let exercises = [];
+        let currentIndex = 0;
+        let answers = [];
+        let startTime = null;
+        let timerInterval = null;
+        let countdownInterval = null;
+        let settings = {};
+        let totalCountdownSeconds = 30 * 60;
+        let remainingSeconds = totalCountdownSeconds;
+
+        // DOM元素获取
+        const start_time_display = document.getElementById('start-time-display');
+        const settingsPanel = document.getElementById('settings-panel');
+        const questionArea = document.getElementById('question-area');
+        const resultArea = document.getElementById('result-area');
+        const infoBar = document.getElementById('info-bar');
+        const displayName = document.getElementById('display-name');
+        const timerDisplay = document.getElementById('timer');
+        const currentQuestionEl = document.getElementById('current-question');
+        const questionContent = document.getElementById('question-content');
+        const currentAnswer = document.getElementById('current-answer');
+        const feedback = document.getElementById('feedback');
+        const startBtn = document.getElementById('start-btn');
+        const questionSubmit = document.getElementById('question-submit');
+        const scoreDisplay = document.getElementById('score');
+        const wrongCount = document.getElementById('wrong-count');
+        const wrongList = document.getElementById('wrong-list');
+        const saveBtn = document.getElementById('save-btn');
+        const screenshotToast = document.getElementById('screenshot-toast');
+        const currentTimeDisplay = document.getElementById('current-time-display');
+        const enableTimerCheckbox = document.getElementById('enable-timer');
+        const countdownContainer = document.getElementById('countdown-container');
+        const countdownTimerDisplay = document.getElementById('countdown-timer');
+        const allowNegativeCheckbox = document.getElementById('allow-negative');
+
+        // 时间格式化
+        function formatTime(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // 更新当前时间显示
+        function updateCurrentTimeDisplay() {
+            const now = new Date();
+            currentTimeDisplay.textContent = `当前时间：${formatTime(now)}`;
+        }
+
+        // 倒计时格式化
+        function formatCountdown(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 更新倒计时
+        function updateCountdown() {
+            remainingSeconds--;
+            countdownTimerDisplay.textContent = formatCountdown(remainingSeconds);
+            
+            if (remainingSeconds <= 300) {
+                countdownTimerDisplay.classList.add('countdown-warning');
+            }
+            
+            if (remainingSeconds <= 0) {
+                clearInterval(countdownInterval);
+                for (let i = currentIndex; i < 50; i++) {
+                    answers.push({ 
+                        ...exercises[i], 
+                        userAnswer: '未答', 
+                        isCorrect: false 
+                    });
+                }
+                finishPractice();
+            }
+        }
+
+        // 生成随机数
+        function getRandomNum(min, max, allowNegative) {
+            let num = Math.floor(Math.random() * (max - min + 1)) + min;
+            if (allowNegative && num !== 0 && Math.random() > 0.5) {
+                num = -num;
+            }
+            return num;
+        }
+
+        // 获取设置参数
+        function getSettings() {
+            const mulDigit1 = document.getElementById('mul-digit1').value;
+            const effectiveDigit1 = mulDigit1 == 0 
+                ? getRandomNum(1, 2, false)
+                : parseInt(mulDigit1);
+
+            return {
+                name: document.getElementById('student-name').value,
+                enableTimer: document.getElementById('enable-timer').checked,
+                allowNegative: document.getElementById('allow-negative').checked,
+                ops: [
+                    { type: '+', enabled: document.getElementById('op-add').checked },
+                    { type: '-', enabled: document.getElementById('op-sub').checked },
+                    { type: '×', enabled: document.getElementById('op-mul').checked },
+                    { type: '÷', enabled: document.getElementById('op-div').checked }
+                ].filter(op => op.enabled),
+                divExact: document.getElementById('div-exact').checked,
+                add: {
+                    min: parseInt(document.getElementById('add-min').value) || 0,
+                    max: parseInt(document.getElementById('add-max').value) || 500
+                },
+                sub: {
+                    min: parseInt(document.getElementById('sub-min').value) || 0,
+                    max: parseInt(document.getElementById('sub-max').value) || 500
+                },
+                mul: {
+                    digit1: effectiveDigit1,
+                    digit2: parseInt(document.getElementById('mul-digit2').value) || 1,
+                    maxResult: parseInt(document.getElementById('mul-max-result').value) || 200
+                },
+                div: {
+                    dividendMin: parseInt(document.getElementById('div-dividend-min').value) || 0,
+                    dividendMax: parseInt(document.getElementById('div-dividend-max').value) || 81,
+                    divisorMin: parseInt(document.getElementById('div-divisor-min').value) || 1,
+                    divisorMax: parseInt(document.getElementById('div-divisor-max').value) || 10
+                }
+            };
+        }
+
+        // 根据位数获取数值范围
+        function getRangeByDigit(digit, allowNegative) {
+            let baseRange = { min: 1, max: 9 };
+            if (digit === 2) baseRange = { min: 10, max: 99 };
+            if (digit === 3) baseRange = { min: 100, max: 999 };
+            
+            return allowNegative 
+                ? { min: -baseRange.max, max: baseRange.max } 
+                : baseRange;
+        }
+
+        // 生成50道题目
+        function generate50Exercises() {
+            exercises = [];
+            const { ops, add, sub, mul, div, allowNegative } = settings;
+            
+            for (let i = 0; i < 50; i++) {
+                const opItem = ops[getRandomNum(0, ops.length - 1, false)];
+                const op = opItem.type;
+                
+                let num1, num2, answer, expression;
+
+                switch (op) {
+                    case '+':
+                        num1 = getRandomNum(add.min, add.max, allowNegative);
+                        num2 = getRandomNum(add.min, add.max, allowNegative);
+                        answer = num1 + num2;
+                        expression = `${formatNumWithSign(num1)} + ${formatNumWithSign(num2)} ＝`;
+                        break;
+                        
+                    case '-':
+                        num1 = getRandomNum(sub.min, sub.max, allowNegative);
+                        num2 = getRandomNum(sub.min, sub.max, allowNegative);
+                        if (!allowNegative && num1 < num2) {
+                            [num1, num2] = [num2, num1];
+                        }
+                        answer = num1 - num2;
+                        expression = `${formatNumWithSign(num1)} - ${formatNumWithSign(num2)} ＝`;
+                        break;
+                        
+                    case '×':
+                        const range1 = getRangeByDigit(mul.digit1, allowNegative);
+                        const range2 = getRangeByDigit(mul.digit2, allowNegative);
+                        let validMul = false;
+                        while (!validMul) {
+                            num1 = getRandomNum(range1.min, range1.max, false);
+                            num2 = getRandomNum(range2.min, range2.max, false);
+                            answer = num1 * num2;
+                            validMul = Math.abs(answer) <= mul.maxResult;
+                        }
+                        expression = `${formatNumWithSign(num1)} × ${formatNumWithSign(num2)} ＝`;
+                        break;
+                        
+                    case '÷':
+                        let divisor, dividend, quotient;
+                        let validDiv = false;
+                        while (!validDiv) {
+                            divisor = getRandomNum(div.divisorMin, div.divisorMax, allowNegative);
+                            if (divisor === 0) continue; 
+                            
+                            const maxQuotient = Math.floor(div.dividendMax / Math.abs(divisor));
+                            const minQuotient = Math.ceil(div.dividendMin / Math.abs(divisor));
+                            quotient = getRandomNum(minQuotient, maxQuotient, allowNegative);
+                            
+                            dividend = divisor * quotient;
+                            validDiv = dividend >= div.dividendMin && dividend <= div.dividendMax;
+                        }
+                        num1 = dividend;
+                        num2 = divisor;
+                        answer = quotient;
+                        expression = `${formatNumWithSign(num1)} ÷ ${formatNumWithSign(num2)} ＝`;
+                        break;
+                }
+
+                exercises.push({ id: i + 1, expression, answer });
+            }
+        }
+
+        // 格式化带符号的数字
+        function formatNumWithSign(num) {
+            return num < 0 ? `(${num})` : num.toString();
+        }
+
+        // 显示当前题目
+        function showCurrentQuestion() {
+            if (currentIndex >= 50) {
+                finishPractice();
+                return;
+            }
+
+            const question = exercises[currentIndex];
+            currentQuestionEl.textContent = currentIndex + 1;
+            questionContent.textContent = question.expression;
+            currentAnswer.value = '';
+            feedback.textContent = '';
+            currentAnswer.focus();
+
+            questionArea.style.display = 'flex';
+        }
+
+        // 开始练习
+        function startPractice() {
+            try {
+                settings = getSettings();
+                if (settings.ops.length === 0) {
+                    alert('请至少选择一种运算类型（加/减/乘/除）');
+                    return;
+                }
+                if (settings.add.min >= settings.add.max) {
+                    alert('加法最小不能大于最大');
+                    return;
+                }
+                if (settings.sub.min >= settings.sub.max) {
+                    alert('减法最小不能大于最大');
+                    return;
+                }
+                if (settings.div.dividendMin >= settings.div.dividendMax) {
+                    alert('被除数最小不能大于最大');
+                    return;
+                }
+                if (settings.div.divisorMin >= settings.div.divisorMax) {
+                    alert('除数最小不能大于最大');
+                    return;
+                }
+
+                generate50Exercises();
+                currentIndex = 0;
+                answers = [];
+                displayName.textContent = settings.name;
+
+                startTime = new Date();
+
+                settingsPanel.style.display = 'none';
+                infoBar.style.display = 'flex';
+                
+                timerInterval = setInterval(updateTimer, 1000);
+                updateTimer();
+
+                if (settings.enableTimer) {
+                    remainingSeconds = totalCountdownSeconds;
+                    countdownContainer.style.display = 'block';
+                    countdownTimerDisplay.textContent = formatCountdown(remainingSeconds);
+                    countdownTimerDisplay.classList.remove('countdown-warning');
+                    countdownInterval = setInterval(updateCountdown, 1000);
+                }
+
+                showCurrentQuestion();
+            } catch (e) {
+                console.error('启动失败', e);
+                alert('启动失败：' + e.message);
+            }
+        }
+
+        // 更新用时
+        function updateTimer() {
+            const now = new Date();
+            const diffMs = now - startTime;
+            const h = Math.floor(diffMs / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diffMs % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diffMs % 60000) / 1000).toString().padStart(2, '0');
+            timerDisplay.textContent = `${h}:${m}:${s}`;
+        }
+
+        // 提交当前答案
+        function submitCurrentAnswer() {
+            const question = exercises[currentIndex];
+            const userAnswer = currentAnswer.value.trim() ? Number(currentAnswer.value) : null;
+            const isCorrect = userAnswer !== null && Math.abs(userAnswer - question.answer) < 0.01;
+
+            answers.push({ ...question, userAnswer: userAnswer ?? '未答', isCorrect });
+
+            feedback.textContent = isCorrect ? '正确！' : `错，答案是${question.answer}`;
+            feedback.className = `feedback ${isCorrect ? 'correct' : 'wrong'}`;
+
+            questionSubmit.disabled = true;
+            setTimeout(() => {
+                currentIndex++;
+                questionSubmit.disabled = false;
+                showCurrentQuestion();
+            }, 1000);
+        }
+
+        // 完成练习
+        function finishPractice() {
+            clearInterval(timerInterval);
+            clearInterval(countdownInterval);
+            countdownContainer.style.display = 'none';
+            
+            questionArea.style.display = 'none';
+            resultArea.style.display = 'block';
+
+            start_time_display.textContent = formatTime(startTime);
+
+            let score = 0;
+            const wrongItems = [];
+            answers.forEach(ans => {
+                if (ans.isCorrect) score += 2;
+                else wrongItems.push(ans);
+            });
+
+            scoreDisplay.textContent = score;
+            wrongCount.textContent = wrongItems.length;
+            wrongList.innerHTML = '';
+            wrongItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'wrong-item';
+                div.innerHTML = `${item.id}. ${item.expression} 你的答案：${item.userAnswer}`;
+                wrongList.appendChild(div);
+            });
+        }
+
+        // 截图并保存
+        function captureAndDownloadScreenshot() {
+            screenshotToast.style.display = 'block';
+            html2canvas(document.getElementById('main-container'), { 
+                scale: 2, 
+                useCORS: true 
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${settings.name}_练习结果.png`;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                screenshotToast.style.display = 'none';
+                alert(`已保存${settings.name}的练习结果！`);
+            });
+        }
+
+        // 切换设置面板显示
+        function toggleSettingPanels() {
+            document.getElementById('add-setting').style.display = 
+                document.getElementById('op-add').checked ? 'block' : 'none';
+            document.getElementById('sub-setting').style.display = 
+                document.getElementById('op-sub').checked ? 'block' : 'none';
+            document.getElementById('mul-setting').style.display = 
+                document.getElementById('op-mul').checked ? 'block' : 'none';
+            document.getElementById('div-setting').style.display = 
+                document.getElementById('op-div').checked ? 'block' : 'none';
+        }
+
+        // 初始化
+        toggleSettingPanels();
+        updateCurrentTimeDisplay();
+        setInterval(updateCurrentTimeDisplay, 1000);
+
+        // 事件监听
+        startBtn.addEventListener('click', startPractice);
+        questionSubmit.addEventListener('click', submitCurrentAnswer);
+        saveBtn.addEventListener('click', captureAndDownloadScreenshot);
+        currentAnswer.addEventListener('keydown', (e) => e.key === 'Enter' && questionSubmit.click());
+        document.getElementById('op-add').addEventListener('change', toggleSettingPanels);
+        document.getElementById('op-sub').addEventListener('change', toggleSettingPanels);
+        document.getElementById('op-mul').addEventListener('change', toggleSettingPanels);
+        document.getElementById('op-div').addEventListener('change', toggleSettingPanels);
+        document.addEventListener('touchstart', () => {}, { passive: true });
     </script>
 </body>
 </html>
