@@ -30,19 +30,17 @@
             display: flex;
             flex-direction: column;
         }
-        /* 头部区域：减少底部间距 */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px; /* 原15px → 8px */
+            margin-bottom: 8px;
         }
         h1 {
             text-align: left;
             color: #2c3e50;
             font-size: 22px;
         }
-        /* 倒计时样式 */
         .countdown-container {
             background-color: transparent;
             color: #333;
@@ -123,11 +121,10 @@
             padding-top: 10px;
             border-top: 1px dashed #eee;
         }
-        /* 信息栏：减少底部间距 */
         .info-bar {
             display: flex;
             justify-content: space-between;
-            margin: 0 0 8px 0; /* 原15px → 8px */
+            margin: 0 0 8px 0;
             font-size: 14px;
             color: #666;
             padding-bottom: 8px;
@@ -137,37 +134,34 @@
             color: #e74c3c;
             font-weight: 500;
         }
-        /* 答题区域：减少上下间距 */
         .single-question {
             display: none;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* 从顶部开始排列，减少顶部空白 */
+            justify-content: flex-start;
             flex-grow: 1;
-            padding: 5px 0 10px; /* 减少顶部内边距 */
+            padding: 5px 0 10px;
         }
-        /* 题号：大幅减少底部间距 */
         .question-number {
             color: #3498db;
             font-size: 16px;
-            margin-bottom: 10px; /* 原20px → 10px */
+            margin-bottom: 10px;
             align-self: flex-start;
             padding-left: 15px;
             width: 100%;
         }
-        /* 题目容器：减少底部间距 */
         .question-container {
             display: flex;
             align-items: center;
             gap: 15px;
             font-size: 34px;
-            margin-bottom: 15px; /* 原30px → 15px */
+            margin-bottom: 15px;
             padding: 15px;
             background-color: #f8f9fa;
             border-radius: 8px;
             text-align: center;
             min-height: 80px;
-            width: 100%; /* 确保占满宽度，避免左右留白 */
+            width: 100%;
             justify-content: center;
         }
         .question-content {
@@ -187,10 +181,9 @@
             border-color: #3498db;
             outline: none;
         }
-        /* 反馈信息：减少底部间距 */
         .feedback {
             height: 30px;
-            margin-bottom: 15px; /* 原35px → 15px */
+            margin-bottom: 15px;
             font-size: 17px;
             font-weight: 500;
         }
@@ -219,7 +212,7 @@
         .submit-btn {
             background-color: #2ecc71;
             color: white;
-            margin-bottom: 10px; /* 原20px → 10px */
+            margin-bottom: 10px;
         }
         .save-btn {
             background-color: #f39c12;
@@ -293,7 +286,6 @@
 </head>
 <body>
     <div class="container" id="main-container">
-        <!-- 头部区域：标题左，倒计时右 -->
         <div class="header">
             <h1>数学口算练习</h1>
             <div class="countdown-container" id="countdown-container">
@@ -348,7 +340,6 @@
                 </div>
             </div>
 
-            <!-- 加法默认范围0-500 -->
             <div class="setting-group" id="add-setting">
                 <div class="setting-title">加法数值范围</div>
                 <div class="range-inputs">
@@ -358,7 +349,6 @@
                 <div style="font-size: 12px; color: #666;">两个加数的范围（允许负数时最小可设为负数）</div>
             </div>
 
-            <!-- 减法默认范围0-500 -->
             <div class="setting-group" id="sub-setting">
                 <div class="setting-title">减法数值范围</div>
                 <div class="range-inputs">
@@ -741,7 +731,7 @@
             timerDisplay.textContent = `${h}:${m}:${s}`;
         }
 
-        // 提交当前答案
+        // 提交当前答案 - 核心修改：根据答案正确性调整跳转时间
         function submitCurrentAnswer() {
             const question = exercises[currentIndex];
             const userAnswer = currentAnswer.value.trim() ? Number(currentAnswer.value) : null;
@@ -753,11 +743,15 @@
             feedback.className = `feedback ${isCorrect ? 'correct' : 'wrong'}`;
 
             questionSubmit.disabled = true;
+            
+            // 关键修改：正确答案0秒跳转，错误答案2秒后跳转
+            const delay = isCorrect ? 0 : 2000;
+            
             setTimeout(() => {
                 currentIndex++;
                 questionSubmit.disabled = false;
                 showCurrentQuestion();
-            }, 1000);
+            }, delay);
         }
 
         // 完成练习
