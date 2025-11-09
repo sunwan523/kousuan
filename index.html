@@ -18,6 +18,7 @@
             min-height: 100vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            position: relative;
         }
         .container {
             max-width: 500px;
@@ -29,6 +30,8 @@
             min-height: calc(100vh - 20px);
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 10;
         }
         .header {
             display: flex;
@@ -92,7 +95,7 @@
             gap: 10px;
             margin-bottom: 10px;
         }
-        input[type="number"], select {
+        input[type="number"], input[type="text"], select {
             flex: 1;
             padding: 10px;
             border: 1px solid #ced4da;
@@ -256,6 +259,13 @@
             margin: 8px 0;
             font-size: 16px;
         }
+        .wrong-answer {
+            color: #e74c3c;
+        }
+        .correct-answer {
+            color: #2ecc71;
+            font-weight: bold;
+        }
         .screenshot-toast {
             position: fixed;
             top: 50%;
@@ -268,6 +278,111 @@
             font-size: 16px;
             z-index: 1000;
             display: none;
+        }
+
+        /* 增强版爆炸效果 */
+        .explosion-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+        
+        .explosion-piece {
+            position: absolute;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+        
+        /* 不同形状的爆炸碎片 */
+        .explosion-piece.circle {
+            border-radius: 50%;
+        }
+        
+        .explosion-piece.square {
+            transform: rotate(45deg);
+        }
+        
+        .explosion-piece.triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0) translate(0, 0);
+                opacity: 1;
+                filter: brightness(1.5);
+            }
+            20% {
+                opacity: 1;
+                filter: brightness(2);
+            }
+            100% {
+                transform: scale(1) translate(var(--dx), var(--dy));
+                opacity: 0;
+            }
+        }
+
+        /* 冲击波效果 */
+        .shockwave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 69, 0, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: shockwave 1s forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes shockwave {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 0.8;
+            }
+            100% {
+                width: 1500px;
+                height: 1500px;
+                opacity: 0;
+            }
+        }
+
+        /* 烟花效果 */
+        .fireworks-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            overflow: hidden;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            opacity: 0;
+        }
+        
+        @keyframes firework {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(15);
+                opacity: 0;
+            }
         }
 
         @media (max-width: 375px) {
@@ -285,6 +400,11 @@
     </style>
 </head>
 <body>
+    <!-- 爆炸效果容器 -->
+    <div id="explosion-container" class="explosion-container"></div>
+    <!-- 烟花效果容器 -->
+    <div id="fireworks-container" class="fireworks-container"></div>
+    
     <div class="container" id="main-container">
         <div class="header">
             <h1>数学口算练习</h1>
@@ -295,11 +415,12 @@
 
         <div id="settings-panel" class="settings-panel">
             <div class="setting-group">
-                <label for="student-name" class="setting-label">选择姓名</label>
-                <select id="student-name">
-                    <option value="孙明卓">孙明卓</option>
-                    <option value="孙竹">孙竹</option>
-                </select>
+                <label for="student-name" class="setting-label">姓名（可输入新名字）</label>
+                <input type="text" id="student-name" list="student-names" value="孙明卓">
+                <datalist id="student-names">
+                    <option value="孙明卓">
+                    <option value="孙竹">
+                </datalist>
                 <div class="current-time-display" id="current-time-display"></div>
             </div>
 
@@ -443,6 +564,8 @@
         let remainingSeconds = totalCountdownSeconds;
 
         // DOM元素获取
+        const explosionContainer = document.getElementById('explosion-container');
+        const fireworksContainer = document.getElementById('fireworks-container');
         const start_time_display = document.getElementById('start-time-display');
         const settingsPanel = document.getElementById('settings-panel');
         const questionArea = document.getElementById('question-area');
@@ -466,6 +589,113 @@
         const countdownContainer = document.getElementById('countdown-container');
         const countdownTimerDisplay = document.getElementById('countdown-timer');
         const allowNegativeCheckbox = document.getElementById('allow-negative');
+        const studentNameInput = document.getElementById('student-name');
+
+        // 设备震动函数
+        function vibrateDevice() {
+            // 检查浏览器是否支持震动API
+            if ("vibrate" in navigator) {
+                // 震动模式：短震50ms，停20ms，再震100ms - 模拟爆炸震动感
+                navigator.vibrate([50, 20, 100]);
+            }
+        }
+
+        // 增强版爆炸效果 - 多形状碎片+冲击波
+        function showExplosion() {
+            // 清空现有爆炸效果
+            explosionContainer.innerHTML = '';
+            
+            // 创建冲击波效果
+            const shockwave = document.createElement('div');
+            shockwave.className = 'shockwave';
+            explosionContainer.appendChild(shockwave);
+            
+            // 创建60个不同形状的爆炸碎片
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const shapes = ['circle', 'square', 'triangle'];
+            const colors = [
+                'radial-gradient(circle, #ff4500, #ff0000)',
+                'radial-gradient(circle, #ff8c00, #ff4500)',
+                'radial-gradient(circle, #ff0000, #8b0000)',
+                'radial-gradient(circle, #ff6347, #dc143c)'
+            ];
+            
+            for (let i = 0; i < 60; i++) {
+                const piece = document.createElement('div');
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                piece.className = `explosion-piece ${shape}`;
+                
+                // 随机大小
+                const size = Math.random() * 20 + 5;
+                piece.style.width = `${size}px`;
+                piece.style.height = `${size}px`;
+                
+                // 定位到屏幕中心
+                piece.style.left = `${centerX}px`;
+                piece.style.top = `${centerY}px`;
+                
+                // 随机颜色渐变
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 随机方向和距离（更远的距离增强震撼感）
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 300 + 150;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                
+                // 设置CSS变量用于动画
+                piece.style.setProperty('--dx', `${dx}px`);
+                piece.style.setProperty('--dy', `${dy}px`);
+                
+                // 随机动画时长（0.6-1.2秒）
+                const duration = Math.random() * 0.6 + 0.6;
+                piece.style.animation = `explode ${duration}s forwards cubic-bezier(0.21, 0.98, 0.6, 0.99)`;
+                
+                explosionContainer.appendChild(piece);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    piece.remove();
+                }, duration * 1000);
+            }
+            
+            // 触发设备震动
+            vibrateDevice();
+        }
+
+        // 创建烟花效果
+        function createFireworks() {
+            // 清空现有烟花
+            fireworksContainer.innerHTML = '';
+            
+            // 创建20个烟花
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    
+                    // 随机颜色
+                    const colors = ['#ff3366', '#33ccff', '#66ff33', '#ffcc00', '#cc66ff'];
+                    firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // 随机位置
+                    firework.style.left = `${Math.random() * 100}%`;
+                    firework.style.top = `${Math.random() * 70 + 10}%`;
+                    
+                    // 随机动画时长
+                    const duration = Math.random() * 1 + 1;
+                    firework.style.animation = `firework ${duration}s forwards`;
+                    
+                    fireworksContainer.appendChild(firework);
+                    
+                    // 动画结束后移除元素
+                    setTimeout(() => {
+                        firework.remove();
+                    }, duration * 1000);
+                }, i * 300);
+            }
+        }
 
         // 时间格式化
         function formatTime(date) {
@@ -531,8 +761,11 @@
                 ? getRandomNum(1, 2, false)
                 : parseInt(mulDigit1);
 
+            // 获取输入的姓名（去除首尾空格）
+            const studentName = studentNameInput.value.trim() || '匿名用户';
+
             return {
-                name: document.getElementById('student-name').value,
+                name: studentName,
                 enableTimer: document.getElementById('enable-timer').checked,
                 allowNegative: document.getElementById('allow-negative').checked,
                 ops: [
@@ -731,7 +964,7 @@
             timerDisplay.textContent = `${h}:${m}:${s}`;
         }
 
-        // 提交当前答案 - 核心修改：根据答案正确性调整跳转时间
+        // 提交当前答案
         function submitCurrentAnswer() {
             const question = exercises[currentIndex];
             const userAnswer = currentAnswer.value.trim() ? Number(currentAnswer.value) : null;
@@ -744,7 +977,12 @@
 
             questionSubmit.disabled = true;
             
-            // 关键修改：正确答案0秒跳转，错误答案2秒后跳转
+            // 错误时显示爆炸效果
+            if (!isCorrect) {
+                showExplosion();
+            }
+            
+            // 正确答案0秒跳转，错误答案2秒后跳转
             const delay = isCorrect ? 0 : 2000;
             
             setTimeout(() => {
@@ -772,13 +1010,21 @@
                 else wrongItems.push(ans);
             });
 
+            // 超过80分显示烟花效果
+            if (score > 80) {
+                createFireworks();
+            }
+
             scoreDisplay.textContent = score;
             wrongCount.textContent = wrongItems.length;
             wrongList.innerHTML = '';
             wrongItems.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'wrong-item';
-                div.innerHTML = `${item.id}. ${item.expression} 你的答案：${item.userAnswer}`;
+                // 显示错题：题目 + 错误答案 + 红色❌ + 绿色正确答案
+                div.innerHTML = `${item.id}. ${item.expression} 
+                    <span class="wrong-answer">${item.userAnswer} ❌</span> 
+                    <span class="correct-answer">正确答案：${item.answer}</span>`;
                 wrongList.appendChild(div);
             });
         }
